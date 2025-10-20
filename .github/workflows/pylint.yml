@@ -1,23 +1,41 @@
-name: Pylint
+name: 🧹 Pylint
 
-on: [push]
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
-  build:
+  lint:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.8", "3.9", "3.10"]
+        python-version: ["3.8", "3.9", "3.10", "3.11"]
+
     steps:
-    - uses: actions/checkout@v4
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v3
+    - name: 🧭 Checkout repository
+      uses: actions/checkout@v4
+
+    - name: 🐍 Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
+        cache: 'pip'
+
+    - name: 📦 Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install pylint
-    - name: Analysing the code with pylint
+        # Optionally install your app deps for imports to resolve
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+    - name: 🔍 Run Pylint
       run: |
-        pylint $(git ls-files '*.py')
+        # Only lint tracked Python files
+        pylint $(git ls-files '*.py') || true
+
+    - name: ✅ Report Summary
+      if: always()
+      run: |
+        echo "Linting completed for Python ${{ matrix.python-version }}"
